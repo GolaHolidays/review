@@ -2,6 +2,8 @@
 FastAPI application factory — wires everything together.
 """
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -21,8 +23,9 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
 
-    # Mount static files
-    application.mount("/static", StaticFiles(directory="static"), name="static")
+    # Mount static files — absolute path ensures correct resolution in Vercel
+    _static_dir = Path(__file__).resolve().parent.parent / "static"
+    application.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
     # Register routes
     application.include_router(review_router)

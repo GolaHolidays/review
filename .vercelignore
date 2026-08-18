@@ -1,0 +1,23 @@
+# Virtual environments — never deploy
+.venv/
+venv/
+env/
+
+# Python bytecode — regenerated on build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local secrets — injected via Vercel dashboard env vars
+.env
+
+# Dev tooling
+.git/
+.gitignore
+run.sh
+pyrightconfig.json
+
+# Test/dev artifacts
+*.log
+*.tmp

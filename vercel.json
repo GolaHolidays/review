@@ -1,0 +1,30 @@
+{
+  "builds": [
+    {
+      "src": "app/main.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "app/main.py"
+    }
+  ],
+  "env": {
+    "APP_DEBUG": "false"
+  },
+  "functions": {
+    "app/main.py": {
+      "maxDuration": 30,
+      "memory": 512
+    }
+  }
+}

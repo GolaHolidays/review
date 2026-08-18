@@ -50,7 +50,8 @@ class Settings(BaseSettings):
     # ── App ──
     app_host: str = "0.0.0.0"
     app_port: int = 8000
-    app_debug: bool = True
+    app_debug: bool = False   # SAFE default — override with APP_DEBUG=true locally
+    app_env: str = "production"  # production | development
 
 
 @lru_cache()

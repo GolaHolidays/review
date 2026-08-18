@@ -3,7 +3,7 @@ Review routes — HTTP layer only, delegates to business logic.
 """
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
@@ -15,6 +15,20 @@ router = APIRouter()
 templates = Jinja2Templates(
     directory="app/templates",
 )
+
+
+# ── Favicon redirects — browsers hard-fetch /favicon.ico from root ──────────
+
+@router.get("/favicon.ico", include_in_schema=False)
+async def favicon_ico():
+    """Redirect root favicon.ico requests to the versioned static asset."""
+    return RedirectResponse(url="/static/favicon.ico", status_code=301)
+
+
+@router.get("/favicon.png", include_in_schema=False)
+async def favicon_png():
+    """Redirect root favicon.png requests to the versioned static asset."""
+    return RedirectResponse(url="/static/favicon.png", status_code=301)
 
 
 @router.get("/", response_class=HTMLResponse)
