@@ -2,12 +2,11 @@
 FastAPI application factory -- wires everything together.
 
 Performance:
-  - GZipMiddleware compresses all text responses >= 1KB automatically
-  - lifespan warms the ReviewPool at startup so first request is instant
-  - StaticFiles uses an absolute path (required in Vercel serverless env)
+  - GZipMiddleware compresses all text responses >= 1KB
+  - No lifespan warmup -- serverless containers don't persist state
+  - StaticFiles uses an absolute path (Vercel serverless compat)
 """
 
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -16,17 +15,6 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.routes.review import router as review_router
-
-
-@asynccontextmanager
-async def lifespan(application: FastAPI):
-    """
-    Startup: warm the review pool so the very first visitor gets a fast response.
-    Shutdown: nothing to clean up (pool tasks are daemon-like).
-    """
-    from app.core.review_generator import review_pool
-    await review_pool.warmup()
-    yield
 
 
 def create_app() -> FastAPI:
@@ -39,14 +27,12 @@ def create_app() -> FastAPI:
         version="1.0.0",
         docs_url="/docs" if settings.app_debug else None,
         redoc_url=None,
-        lifespan=lifespan,
     )
 
     # GZip: automatically compresses HTML/JSON/CSS responses >= 1KB
-    # Reduces transfer size ~70% for text payloads
     application.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Mount static files -- absolute path ensures correct resolution in Vercel
+    # Mount static files -- absolute path for Vercel compat
     _static_dir = Path(__file__).resolve().parent.parent / "static"
     application.mount("/static", StaticFiles(directory=_static_dir), name="static")
 

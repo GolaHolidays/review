@@ -1,11 +1,12 @@
 """
 Review routes -- HTTP layer only, delegates to business logic.
 
-Performance design:
-  GET /             -- serves HTML skeleton INSTANTLY (no LLM wait).
-                       JS fetches the review from /api/review after DOM load.
-  GET /api/review   -- pops from ReviewPool (sub-ms if warm) or generates live.
-  GET /favicon.*    -- 301 redirects to static assets.
+Performance:
+  GET /           -- serves self-contained HTML instantly (ALL CSS inlined).
+                     Zero external requests needed to render.
+                     JS fetches review from /api/review after paint.
+  GET /api/review -- single async LLM call, returns JSON.
+  GET /favicon.*  -- 301 redirects to static assets.
 """
 
 from fastapi import APIRouter, Request
@@ -13,7 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
-from app.core.review_generator import review_pool
+from app.core.review_generator import agenerate_review
 
 
 router = APIRouter()
@@ -21,7 +22,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-# -- Favicon redirects -- browsers hard-fetch /favicon.* from root ------------
+# -- Favicon redirects --------------------------------------------------------
 
 @router.get("/favicon.ico", include_in_schema=False)
 async def favicon_ico():
@@ -33,14 +34,14 @@ async def favicon_png():
     return RedirectResponse(url="/static/favicon.png", status_code=301)
 
 
-# -- Main page -- serves skeleton HTML instantly, JS loads review async --------
+# -- Main page ----------------------------------------------------------------
 
 @router.get("/", response_class=HTMLResponse)
 async def review_page(request: Request):
     """
-    Renders the page skeleton immediately -- no LLM call here.
-    The review text is loaded client-side via /api/review after DOM ready.
-    Page appears in <100ms; review fills in ~2-3s in the background.
+    Serves the complete page instantly. All CSS is inlined in the template,
+    so the browser can paint immediately with zero additional requests.
+    Review text loads async via /api/review.
     """
     settings = get_settings()
     return templates.TemplateResponse(
@@ -54,20 +55,18 @@ async def review_page(request: Request):
     )
 
 
-# -- API endpoint -- pops from pool (instant if warm) -------------------------
+# -- API: single async LLM call per request ----------------------------------
 
 @router.get("/api/review", response_class=JSONResponse)
 async def api_generate_review():
     """
-    Returns a fresh review as JSON.
-    Pops from ReviewPool (sub-millisecond if pool is warm).
-    Pool triggers background refill after each pop.
-    Falls back to live generation if pool is empty.
+    Returns a fresh review as JSON. Single async LLM call.
+    No pool, no warmup -- optimal for serverless (Vercel).
     """
     settings = get_settings()
 
     try:
-        review_text = await review_pool.get()
+        review_text = await agenerate_review()
     except Exception as e:
         return JSONResponse(
             status_code=500,

@@ -11,34 +11,102 @@
     <link rel="icon" type="image/png"   href="/static/favicon.png" sizes="192x192">
     <link rel="apple-touch-icon"        href="/static/favicon.png">
 
-    <!-- CSS: preload for faster paint, then apply -->
-    <link rel="preload" href="/static/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="/static/style.css"></noscript>
-
-    <!-- Google Fonts: async load (non-render-blocking) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          as="style"
-          onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    </noscript>
-
-    <!-- Critical inline CSS: renders the skeleton immediately, before external CSS loads -->
+    <!--
+      ALL CSS inlined: the browser renders the complete page in a single request.
+      No external CSS file, no Google Fonts CDN roundtrip.
+      System font stack looks native and loads in 0ms.
+    -->
     <style>
+        /* Reset & Variables */
         *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-        :root{--brand-orange:#E8650A;--bg-page:#F7F5F2;--bg-card:#fff;--border-light:#E8E4DF;--radius-lg:18px;--radius-md:12px;--radius-full:9999px;--ease-out:cubic-bezier(0.16,1,0.3,1)}
-        html{font-size:16px;-webkit-font-smoothing:antialiased}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-page);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+        :root{
+            --brand-orange:#E8650A;--brand-orange-mid:#F07A2A;--brand-orange-soft:#FFF0E6;
+            --brand-dark:#1C1C1C;--brand-forest:#2D3A1E;
+            --bg-page:#F7F5F2;--bg-card:#fff;--bg-card-hover:#FDFCFB;
+            --border-light:#E8E4DF;--border-orange:rgba(232,101,10,0.25);
+            --text-primary:#1C1C1C;--text-secondary:#5A5550;--text-muted:#9A948E;
+            --accent:var(--brand-orange);--accent-hover:#CC5508;--accent-glow:rgba(232,101,10,0.18);
+            --success:#2E7D32;--success-bg:#EBF5EC;--star-color:#F5A623;
+            --radius-sm:6px;--radius-md:12px;--radius-lg:18px;--radius-full:9999px;
+            --ease-out:cubic-bezier(0.16,1,0.3,1);--t-fast:180ms var(--ease-out);--t-normal:320ms var(--ease-out)
+        }
+        html{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--bg-page);color:var(--text-primary);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 10% -10%,rgba(232,101,10,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 110%,rgba(232,101,10,0.05) 0%,transparent 55%);pointer-events:none;z-index:0}
+
+        /* Layout */
         .container{position:relative;z-index:1;width:100%;max-width:560px;padding:3rem 1.5rem 2.5rem;display:flex;flex-direction:column;align-items:center;gap:1.75rem}
+
+        /* Brand */
+        .brand{text-align:center;display:flex;flex-direction:column;align-items:center;gap:.6rem}
+        .brand__logo-wrap{background:#fff;border-radius:var(--radius-md);padding:.5rem 1rem;box-shadow:0 2px 12px rgba(0,0,0,.08);display:inline-flex;align-items:center;justify-content:center}
+        .brand__logo{height:72px;width:auto;display:block}
+        .brand__tagline{font-size:.8rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+
+        /* Divider */
+        .divider{width:100%;display:flex;align-items:center;gap:.75rem;color:var(--text-muted);font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+        .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border-light)}
+
+        /* Review Card */
+        .review-card{width:100%;background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:1.75rem 2rem;box-shadow:0 1px 3px rgba(0,0,0,.06),0 6px 24px rgba(0,0,0,.07);transition:box-shadow var(--t-normal),border-color var(--t-normal);position:relative}
+        .review-card::before{content:'';position:absolute;left:0;top:1.5rem;bottom:1.5rem;width:3px;background:linear-gradient(180deg,var(--brand-orange) 0%,var(--brand-orange-mid) 100%);border-radius:0 2px 2px 0}
+        .review-card:hover{border-color:var(--border-orange);box-shadow:0 1px 3px rgba(0,0,0,.06),0 10px 36px rgba(232,101,10,.1)}
+        .review-card--loading{opacity:.55;pointer-events:none}
+
+        .review-card__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+        .review-card__label{display:flex;align-items:center;gap:.4rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--brand-orange)}
+        .review-card__stars{display:flex;gap:.2rem}
+        .star{font-size:1.1rem;color:var(--star-color);animation:star-pop .35s var(--ease-out) backwards}
+        .star:nth-child(1){animation-delay:.05s}.star:nth-child(2){animation-delay:.1s}.star:nth-child(3){animation-delay:.15s}.star:nth-child(4){animation-delay:.2s}.star:nth-child(5){animation-delay:.25s}
+        @keyframes star-pop{from{opacity:0;transform:scale(.4) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+
+        .review-card__text{font-size:1rem;line-height:1.75;color:var(--text-secondary);font-weight:400;font-style:normal;transition:opacity var(--t-normal),transform var(--t-normal)}
+
+        .review-card__footer{display:flex;align-items:center;gap:.6rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border-light)}
+        .review-card__avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--brand-orange),#F5A623);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0}
+        .review-card__reviewer{font-size:.78rem;color:var(--text-muted)}
+        .review-card__reviewer strong{display:block;color:var(--text-secondary);font-weight:600;font-size:.82rem}
+        .review-card__google-badge{margin-left:auto;display:flex;align-items:center;gap:.3rem;font-size:.68rem;font-weight:600;color:var(--text-muted);letter-spacing:.02em}
+
+        /* Buttons */
+        .actions{display:flex;gap:.75rem;width:100%}
+        .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.8rem 1.25rem;font-family:inherit;font-size:.875rem;font-weight:600;border:none;border-radius:var(--radius-md);cursor:pointer;transition:all var(--t-fast);outline:none;position:relative;overflow:hidden;white-space:nowrap}
+        .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.18);opacity:0;transition:opacity 200ms;border-radius:inherit}
+        .btn:active::after{opacity:1}
+        .btn--primary{background:var(--brand-orange);color:#fff;box-shadow:0 3px 14px rgba(232,101,10,.3)}
+        .btn--primary:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 6px 22px rgba(232,101,10,.38)}
+        .btn--primary:active{transform:translateY(0);box-shadow:0 2px 8px rgba(232,101,10,.25)}
+        .btn--success{background:var(--success)!important;box-shadow:0 3px 14px rgba(46,125,50,.28)!important;color:#fff!important}
+        .btn--ghost{background:#fff;color:var(--text-secondary);border:1px solid var(--border-light);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+        .btn--ghost:hover{background:var(--brand-orange-soft);border-color:var(--border-orange);color:var(--brand-orange);transform:translateY(-2px);box-shadow:0 4px 14px rgba(232,101,10,.1)}
+        .btn--ghost:active{transform:translateY(0)}
+        .btn--loading{opacity:.65;cursor:wait}
+        .btn--loading svg{animation:spin .9s linear infinite}
+        .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+        @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+        /* Hint */
+        .hint{font-size:.78rem;color:var(--text-muted);text-align:center;line-height:1.65;max-width:380px}
+        .hint strong{color:var(--text-secondary);font-weight:600}
+
+        /* Toast */
+        .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);display:flex;align-items:center;gap:.5rem;padding:.65rem 1.1rem;background:#fff;border:1px solid #C8E6C9;border-radius:var(--radius-full);color:var(--success);font-size:.82rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.12);opacity:0;transition:all .38s var(--ease-out);z-index:200;pointer-events:none}
+        .toast--visible{transform:translateX(-50%) translateY(0);opacity:1}
+
         /* Skeleton shimmer */
         @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
-        .skeleton{background:linear-gradient(90deg,#ece9e6 25%,#f5f3f1 50%,#ece9e6 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;border-radius:6px;color:transparent!important;user-select:none;pointer-events:none}
-        .skeleton::after{content:''}
+        .skeleton{background:linear-gradient(90deg,#ece9e6 25%,#f5f3f1 50%,#ece9e6 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;border-radius:var(--radius-sm);color:transparent!important;user-select:none;pointer-events:none}
         .review-skeleton-text{height:1rem;margin-bottom:.6rem;border-radius:4px}
         .review-skeleton-text:last-child{width:70%}
+
+        /* Responsive */
+        @media(max-width:480px){
+            .container{padding:2rem 1rem 1.5rem;gap:1.25rem}
+            .brand__logo{height:58px}
+            .review-card{padding:1.25rem 1.25rem 1.25rem 1.5rem}
+            .review-card__text{font-size:.93rem}
+            .actions{flex-direction:column}
+        }
     </style>
 </head>
 <body>
@@ -48,15 +116,18 @@
         <!-- Brand Header -->
         <header class="brand">
             <div class="brand__logo-wrap">
-                <img
-                    class="brand__logo"
-                    src="/static/img/gola-holidays-logo.jpg"
-                    alt="Gola Holidays logo"
-                    width="180"
-                    height="72"
-                    draggable="false"
-                    fetchpriority="high"
-                >
+                <picture>
+                    <source srcset="/static/img/gola-holidays-logo.webp" type="image/webp">
+                    <img
+                        class="brand__logo"
+                        src="/static/img/gola-holidays-logo.jpg"
+                        alt="Gola Holidays logo"
+                        width="180"
+                        height="72"
+                        draggable="false"
+                        fetchpriority="high"
+                    >
+                </picture>
             </div>
             <p class="brand__tagline">{{ brand_tagline }}</p>
         </header>
@@ -67,10 +138,8 @@
         <!-- Review Card -->
         <section class="review-card" id="reviewCard">
 
-            <!-- Card header: label + stars -->
             <div class="review-card__header">
                 <div class="review-card__label">
-                    <!-- Star icon -->
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                     </svg>
@@ -85,23 +154,20 @@
                 </div>
             </div>
 
-            <!-- Review body: skeleton shown until JS loads the review -->
+            <!-- Skeleton shown while /api/review loads -->
             <blockquote class="review-card__text" id="reviewText" aria-live="polite">
-                <!-- Skeleton lines shown while loading -->
                 <span class="review-skeleton-text skeleton" style="display:block;width:100%">&nbsp;</span>
                 <span class="review-skeleton-text skeleton" style="display:block;width:92%">&nbsp;</span>
                 <span class="review-skeleton-text skeleton" style="display:block;width:88%">&nbsp;</span>
                 <span class="review-skeleton-text skeleton" style="display:block;width:70%">&nbsp;</span>
             </blockquote>
 
-            <!-- Google-style reviewer row -->
             <div class="review-card__footer">
                 <div class="review-card__avatar" aria-hidden="true">GH</div>
                 <div class="review-card__reviewer">
                     <strong>Happy Traveller</strong>
                     Posted on Google Maps
                 </div>
-                <!-- Google "G" badge -->
                 <div class="review-card__google-badge" aria-label="Google review">
                     <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -114,7 +180,7 @@
             </div>
         </section>
 
-        <!-- Action Buttons (disabled until review loads) -->
+        <!-- Action Buttons -->
         <div class="actions">
             <button class="btn btn--primary" id="copyBtn" onclick="copyAndRedirect()" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -133,7 +199,6 @@
             </button>
         </div>
 
-        <!-- Footer hint -->
         <p class="hint">
             Click <strong>Copy &amp; Post Review</strong> to copy the text, then paste it on Google&nbsp;Maps.<br>
             Use <strong>New Review</strong> to generate a fresh one.
@@ -152,10 +217,9 @@
     <script>
         const GOOGLE_REVIEW_URL = "{{ google_review_url }}";
 
-        /* ---- Load review on page ready (non-blocking) ---- */
         function setReviewText(text) {
             const el = document.getElementById("reviewText");
-            el.innerHTML = "";           // clear skeleton spans
+            el.innerHTML = "";
             el.textContent = text;
             el.style.opacity   = "0";
             el.style.transform = "translateY(8px)";
@@ -182,30 +246,24 @@
             }
         }
 
-        /* ---- Copy & redirect ---- */
         async function copyAndRedirect() {
             const reviewText = document.getElementById("reviewText").textContent.trim();
             const btn        = document.getElementById("copyBtn");
             const btnText    = document.getElementById("copyBtnText");
 
-            const writeClipboard = async () => {
-                try {
-                    await navigator.clipboard.writeText(reviewText);
-                } catch {
-                    const ta = Object.assign(document.createElement("textarea"), {
-                        value: reviewText,
-                        style: "position:fixed;opacity:0;"
-                    });
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(ta);
-                }
-            };
+            try {
+                await navigator.clipboard.writeText(reviewText);
+            } catch {
+                const ta = Object.assign(document.createElement("textarea"), {
+                    value: reviewText, style: "position:fixed;opacity:0;"
+                });
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                document.body.removeChild(ta);
+            }
 
-            await writeClipboard();
             showToast();
-
             btn.classList.add("btn--success");
             btnText.textContent = "Copied! Opening Google\u2026";
 
@@ -216,7 +274,6 @@
             }, 1400);
         }
 
-        /* ---- Regenerate review ---- */
         async function regenerateReview() {
             const card     = document.getElementById("reviewCard");
             const textEl   = document.getElementById("reviewText");
@@ -228,7 +285,6 @@
             regenBtn.classList.add("btn--loading");
             card.classList.add("review-card--loading");
 
-            // Show skeleton while loading
             textEl.innerHTML = [
                 '<span class="review-skeleton-text skeleton" style="display:block;width:100%">&nbsp;</span>',
                 '<span class="review-skeleton-text skeleton" style="display:block;width:92%">&nbsp;</span>',
@@ -249,14 +305,13 @@
             }
         }
 
-        /* ---- Toast helper ---- */
         function showToast() {
             const toast = document.getElementById("toast");
             toast.classList.add("toast--visible");
             setTimeout(() => toast.classList.remove("toast--visible"), 2600);
         }
 
-        // Kick off review load immediately on parse (before DOMContentLoaded)
+        // Fire immediately on parse -- don't wait for DOMContentLoaded
         loadInitialReview();
     </script>
 </body>
