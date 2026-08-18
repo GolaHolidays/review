@@ -471,3 +471,41 @@ body::before {
         flex-direction: column;
     }
 }
+
+/* =====================================================
+   SKELETON LOADING
+   Shimmer animation shown while review is being fetched
+   ===================================================== */
+@keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #ece9e6 25%,
+        #f5f3f1 50%,
+        #ece9e6 75%
+    );
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: var(--radius-sm);
+    color: transparent !important;
+    user-select: none;
+    pointer-events: none;
+}
+
+.review-skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.6rem;
+    border-radius: 4px;
+}
+
+/* Buttons disabled state while review loads */
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}

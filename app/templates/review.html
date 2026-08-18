@@ -6,39 +6,65 @@
     <meta name="description" content="{{ brand_name }} — Share your experience and help other travellers discover Uttarakhand.">
     <title>{{ brand_name }} — Review</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="icon" type="image/png"   href="/static/favicon.png" sizes="192x192">
     <link rel="apple-touch-icon"        href="/static/favicon.png">
 
-    <link rel="stylesheet" href="/static/style.css">
+    <!-- CSS: preload for faster paint, then apply -->
+    <link rel="preload" href="/static/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/static/style.css"></noscript>
+
+    <!-- Google Fonts: async load (non-render-blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
+
+    <!-- Critical inline CSS: renders the skeleton immediately, before external CSS loads -->
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{--brand-orange:#E8650A;--bg-page:#F7F5F2;--bg-card:#fff;--border-light:#E8E4DF;--radius-lg:18px;--radius-md:12px;--radius-full:9999px;--ease-out:cubic-bezier(0.16,1,0.3,1)}
+        html{font-size:16px;-webkit-font-smoothing:antialiased}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-page);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+        .container{position:relative;z-index:1;width:100%;max-width:560px;padding:3rem 1.5rem 2.5rem;display:flex;flex-direction:column;align-items:center;gap:1.75rem}
+        /* Skeleton shimmer */
+        @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+        .skeleton{background:linear-gradient(90deg,#ece9e6 25%,#f5f3f1 50%,#ece9e6 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;border-radius:6px;color:transparent!important;user-select:none;pointer-events:none}
+        .skeleton::after{content:''}
+        .review-skeleton-text{height:1rem;margin-bottom:.6rem;border-radius:4px}
+        .review-skeleton-text:last-child{width:70%}
+    </style>
 </head>
 <body>
 
     <main class="container">
 
-        <!-- ── Brand Header ── -->
+        <!-- Brand Header -->
         <header class="brand">
             <div class="brand__logo-wrap">
                 <img
                     class="brand__logo"
                     src="/static/img/gola-holidays-logo.jpg"
                     alt="Gola Holidays logo"
+                    width="180"
+                    height="72"
                     draggable="false"
+                    fetchpriority="high"
                 >
             </div>
             <p class="brand__tagline">{{ brand_tagline }}</p>
         </header>
 
-        <!-- ── Section Label ── -->
+        <!-- Section Label -->
         <div class="divider">Your Google Review</div>
 
-        <!-- ── Review Card ── -->
+        <!-- Review Card -->
         <section class="review-card" id="reviewCard">
 
             <!-- Card header: label + stars -->
@@ -51,18 +77,24 @@
                     AI-Generated Review
                 </div>
                 <div class="review-card__stars" aria-label="5 out of 5 stars">
-                    <span class="star" aria-hidden="true">★</span>
-                    <span class="star" aria-hidden="true">★</span>
-                    <span class="star" aria-hidden="true">★</span>
-                    <span class="star" aria-hidden="true">★</span>
-                    <span class="star" aria-hidden="true">★</span>
+                    <span class="star" aria-hidden="true">&#9733;</span>
+                    <span class="star" aria-hidden="true">&#9733;</span>
+                    <span class="star" aria-hidden="true">&#9733;</span>
+                    <span class="star" aria-hidden="true">&#9733;</span>
+                    <span class="star" aria-hidden="true">&#9733;</span>
                 </div>
             </div>
 
-            <!-- Review body -->
-            <blockquote class="review-card__text" id="reviewText">{{ review_text }}</blockquote>
+            <!-- Review body: skeleton shown until JS loads the review -->
+            <blockquote class="review-card__text" id="reviewText" aria-live="polite">
+                <!-- Skeleton lines shown while loading -->
+                <span class="review-skeleton-text skeleton" style="display:block;width:100%">&nbsp;</span>
+                <span class="review-skeleton-text skeleton" style="display:block;width:92%">&nbsp;</span>
+                <span class="review-skeleton-text skeleton" style="display:block;width:88%">&nbsp;</span>
+                <span class="review-skeleton-text skeleton" style="display:block;width:70%">&nbsp;</span>
+            </blockquote>
 
-            <!-- Fake Google-style reviewer row -->
+            <!-- Google-style reviewer row -->
             <div class="review-card__footer">
                 <div class="review-card__avatar" aria-hidden="true">GH</div>
                 <div class="review-card__reviewer">
@@ -82,10 +114,9 @@
             </div>
         </section>
 
-        <!-- ── Action Buttons ── -->
+        <!-- Action Buttons (disabled until review loads) -->
         <div class="actions">
-            <button class="btn btn--primary" id="copyBtn" onclick="copyAndRedirect()">
-                <!-- Copy icon -->
+            <button class="btn btn--primary" id="copyBtn" onclick="copyAndRedirect()" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
@@ -93,8 +124,7 @@
                 <span id="copyBtnText">Copy &amp; Post Review</span>
             </button>
 
-            <button class="btn btn--ghost" id="regenBtn" onclick="regenerateReview()">
-                <!-- Refresh icon -->
+            <button class="btn btn--ghost" id="regenBtn" onclick="regenerateReview()" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="23 4 23 10 17 10"/>
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
@@ -103,7 +133,7 @@
             </button>
         </div>
 
-        <!-- ── Footer hint ── -->
+        <!-- Footer hint -->
         <p class="hint">
             Click <strong>Copy &amp; Post Review</strong> to copy the text, then paste it on Google&nbsp;Maps.<br>
             Use <strong>New Review</strong> to generate a fresh one.
@@ -111,7 +141,7 @@
 
     </main>
 
-    <!-- ── Toast ── -->
+    <!-- Toast -->
     <div class="toast" id="toast" role="status" aria-live="polite">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"/>
@@ -122,7 +152,37 @@
     <script>
         const GOOGLE_REVIEW_URL = "{{ google_review_url }}";
 
-        /* ─── Copy & redirect ─── */
+        /* ---- Load review on page ready (non-blocking) ---- */
+        function setReviewText(text) {
+            const el = document.getElementById("reviewText");
+            el.innerHTML = "";           // clear skeleton spans
+            el.textContent = text;
+            el.style.opacity   = "0";
+            el.style.transform = "translateY(8px)";
+            requestAnimationFrame(() => {
+                el.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+                el.style.opacity    = "1";
+                el.style.transform  = "translateY(0)";
+            });
+            document.getElementById("copyBtn").disabled  = false;
+            document.getElementById("regenBtn").disabled = false;
+        }
+
+        async function loadInitialReview() {
+            try {
+                const res  = await fetch("/api/review");
+                const data = await res.json();
+                if (data.review) {
+                    setReviewText(data.review);
+                } else {
+                    setReviewText("Unable to generate review. Please refresh.");
+                }
+            } catch {
+                setReviewText("Something went wrong. Please refresh the page.");
+            }
+        }
+
+        /* ---- Copy & redirect ---- */
         async function copyAndRedirect() {
             const reviewText = document.getElementById("reviewText").textContent.trim();
             const btn        = document.getElementById("copyBtn");
@@ -132,7 +192,6 @@
                 try {
                     await navigator.clipboard.writeText(reviewText);
                 } catch {
-                    /* Fallback */
                     const ta = Object.assign(document.createElement("textarea"), {
                         value: reviewText,
                         style: "position:fixed;opacity:0;"
@@ -148,7 +207,7 @@
             showToast();
 
             btn.classList.add("btn--success");
-            btnText.textContent = "Copied! Opening Google…";
+            btnText.textContent = "Copied! Opening Google\u2026";
 
             setTimeout(() => {
                 window.open(GOOGLE_REVIEW_URL, "_blank");
@@ -157,34 +216,32 @@
             }, 1400);
         }
 
-        /* ─── Regenerate review ─── */
+        /* ---- Regenerate review ---- */
         async function regenerateReview() {
-            const card    = document.getElementById("reviewCard");
-            const textEl  = document.getElementById("reviewText");
+            const card     = document.getElementById("reviewCard");
+            const textEl   = document.getElementById("reviewText");
             const regenBtn = document.getElementById("regenBtn");
+            const copyBtn  = document.getElementById("copyBtn");
 
             regenBtn.disabled = true;
+            copyBtn.disabled  = true;
             regenBtn.classList.add("btn--loading");
             card.classList.add("review-card--loading");
+
+            // Show skeleton while loading
+            textEl.innerHTML = [
+                '<span class="review-skeleton-text skeleton" style="display:block;width:100%">&nbsp;</span>',
+                '<span class="review-skeleton-text skeleton" style="display:block;width:92%">&nbsp;</span>',
+                '<span class="review-skeleton-text skeleton" style="display:block;width:88%">&nbsp;</span>',
+                '<span class="review-skeleton-text skeleton" style="display:block;width:70%">&nbsp;</span>',
+            ].join("");
 
             try {
                 const res  = await fetch("/api/review");
                 const data = await res.json();
-
-                if (data.review) {
-                    textEl.style.opacity   = "0";
-                    textEl.style.transform = "translateY(6px)";
-
-                    setTimeout(() => {
-                        textEl.textContent     = data.review;
-                        textEl.style.opacity   = "1";
-                        textEl.style.transform = "translateY(0)";
-                    }, 280);
-                } else {
-                    textEl.textContent = "Couldn't generate a review. Please try again.";
-                }
+                setReviewText(data.review || "Couldn't generate a review. Please try again.");
             } catch {
-                textEl.textContent = "Something went wrong. Please refresh the page.";
+                setReviewText("Something went wrong. Please refresh the page.");
             } finally {
                 regenBtn.disabled = false;
                 regenBtn.classList.remove("btn--loading");
@@ -192,12 +249,15 @@
             }
         }
 
-        /* ─── Toast helper ─── */
+        /* ---- Toast helper ---- */
         function showToast() {
             const toast = document.getElementById("toast");
             toast.classList.add("toast--visible");
             setTimeout(() => toast.classList.remove("toast--visible"), 2600);
         }
+
+        // Kick off review load immediately on parse (before DOMContentLoaded)
+        loadInitialReview();
     </script>
 </body>
 </html>
