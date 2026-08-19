@@ -1,10 +1,6 @@
 """
-Review generator -- orchestrates prompt building + LLM call.
-Pure business logic, no HTTP concerns.
-
-On Vercel serverless, each request may be a cold start -- there is no
-persistent state between invocations. The pool/warmup pattern doesn't
-work here. Instead: one async LLM call per request, as fast as possible.
+Review generator -- orchestrates randomizer + service prompt + LLM call.
+Each call rolls a fresh persona + picks a random service = unique review.
 """
 
 from __future__ import annotations
@@ -12,40 +8,54 @@ from __future__ import annotations
 import logging
 
 from app.core.llm import LLMClient, get_llm_client
+from app.core.review_randomizer import roll_persona, format_persona_for_prompt
+from app.prompts.service_prompts import pick_random_service
 from app.prompts.system_prompt import build_system_prompt
 
 
 logger = logging.getLogger(__name__)
 
-# -- Module-level singleton LLM client ----------------------------------------
 _default_client: LLMClient | None = None
 
 
 def _get_default_client() -> LLMClient:
-    """Return (and lazily initialise) the module-level LLM client."""
     global _default_client
     if _default_client is None:
         _default_client = get_llm_client()
     return _default_client
 
 
-# -- Async review generation (preferred server path) --------------------------
+def _build_prompts() -> tuple[str, str, float]:
+    """Roll randomizer + pick service → return (system_prompt, user_prompt, temp_offset)."""
+    card = roll_persona()
+    service = pick_random_service()
+    persona_block = format_persona_for_prompt(card)
+
+    system_prompt = build_system_prompt(
+        service_context=service.context,
+        persona_block=persona_block,
+    )
+
+    # User prompt is now minimal — all instructions are in system prompt
+    user_prompt = f"Write one Google Maps review for Gola Holidays about their {service.service_name} service."
+
+    logger.debug(
+        "Rolled seed=%d service=%s persona=%s length=%s",
+        card.seed, service.service_id, card.persona["who"][:30], card.length.label,
+    )
+
+    return system_prompt, user_prompt, card.temperature_offset
+
 
 async def agenerate_review(client: LLMClient | None = None) -> str:
-    """
-    Async: generate a single natural-sounding Google review.
-    Uses the async LLM path -- never blocks the event loop.
-    Single call, no pool, no warmup -- ideal for serverless.
-    """
+    """Async: generate one unique review with full randomization."""
     resolved = client or _get_default_client()
-    system_prompt = build_system_prompt()
-    user_prompt = "Write a complete, detailed 3 to 4 sentence Google Maps review for Gola Holidays sharing a genuine, personal trip experience."
-    return await resolved.agenerate(system_prompt, user_prompt)
+    system_prompt, user_prompt, temp_offset = _build_prompts()
+    return await resolved.agenerate(system_prompt, user_prompt, temp_offset)
 
 
 def generate_review(client: LLMClient | None = None) -> str:
-    """Sync: generate a review (kept for backwards compat / testing)."""
+    """Sync: generate one unique review with full randomization."""
     resolved = client or _get_default_client()
-    system_prompt = build_system_prompt()
-    user_prompt = "Write a complete, detailed 3 to 4 sentence Google Maps review for Gola Holidays sharing a genuine, personal trip experience."
-    return resolved.generate(system_prompt, user_prompt)
+    system_prompt, user_prompt, temp_offset = _build_prompts()
+    return resolved.generate(system_prompt, user_prompt, temp_offset)

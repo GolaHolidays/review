@@ -83,8 +83,8 @@ class KeyPool:
 class LLMClient(Protocol):
     """Interface any LLM provider must satisfy."""
 
-    def generate(self, system_prompt: str, user_prompt: str) -> str: ...
-    async def agenerate(self, system_prompt: str, user_prompt: str) -> str: ...
+    def generate(self, system_prompt: str, user_prompt: str, temp_offset: float = 0.0) -> str: ...
+    async def agenerate(self, system_prompt: str, user_prompt: str, temp_offset: float = 0.0) -> str: ...
 
 
 # -- Gemini Implementation with round-robin + fallback -------------------------
@@ -104,15 +104,16 @@ class GeminiClient:
         self._gen_config = types.GenerateContentConfig(
             temperature=0.85,
             top_p=0.95,
-            max_output_tokens=300,
+            max_output_tokens=180,
         )
 
     # -- shared helpers --------------------------------------------------------
 
-    def _build_config(self, system_prompt: str) -> types.GenerateContentConfig:
+    def _build_config(self, system_prompt: str, temp_offset: float = 0.0) -> types.GenerateContentConfig:
+        temp = max(0.1, min(1.5, self._gen_config.temperature + temp_offset))
         return types.GenerateContentConfig(
             system_instruction=system_prompt,
-            temperature=self._gen_config.temperature,
+            temperature=temp,
             top_p=self._gen_config.top_p,
             max_output_tokens=self._gen_config.max_output_tokens,
         )
@@ -131,10 +132,10 @@ class GeminiClient:
 
     # -- sync path -------------------------------------------------------------
 
-    def generate(self, system_prompt: str, user_prompt: str) -> str:
+    def generate(self, system_prompt: str, user_prompt: str, temp_offset: float = 0.0) -> str:
         """Synchronous generation with round-robin + fallback."""
         attempts = self._build_attempts()
-        config   = self._build_config(system_prompt)
+        config   = self._build_config(system_prompt, temp_offset)
         last_exc: Exception | None = None
 
         for attempt_num, (slot, api_key) in enumerate(attempts):
@@ -164,13 +165,13 @@ class GeminiClient:
 
     # -- async path ------------------------------------------------------------
 
-    async def agenerate(self, system_prompt: str, user_prompt: str) -> str:
+    async def agenerate(self, system_prompt: str, user_prompt: str, temp_offset: float = 0.0) -> str:
         """
         Async generation -- uses client.aio so it never blocks the event loop.
         Identical fallback logic to generate(). Preferred for all server paths.
         """
         attempts = self._build_attempts()
-        config   = self._build_config(system_prompt)
+        config   = self._build_config(system_prompt, temp_offset)
         last_exc: Exception | None = None
 
         for attempt_num, (slot, api_key) in enumerate(attempts):
