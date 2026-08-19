@@ -375,7 +375,8 @@ def _compute_service_weights(age: AgeBucket, group: TravelGroup) -> list[float]:
     Still probabilistic — a 60yr old CAN book a safari, just less likely.
     """
     # Base weights: [safari, hotel, taxi, tour, sightseeing]
-    w = [0.25, 0.10, 0.20, 0.30, 0.15]
+    # Priority order requested: tour, hotel, safari, sightseeing, taxi
+    w = [0.20, 0.25, 0.08, 0.35, 0.12]
 
     # Age adjustments
     if age.label in ("50s", "60s+"):

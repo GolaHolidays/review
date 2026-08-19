@@ -37,18 +37,17 @@ _SAFARI = ServiceContext(
     service_name="Jim Corbett Safari",
     base_context=(
         "SERVICE: Jim Corbett jungle safari booked through Gola Holidays.\n"
-        "WHAT GOLA ARRANGED: permit booking, jeep and guide, morning or evening slot, pickup from station or resort.\n"
+        "WHAT GOLA ARRANGED: permit booking, safari vehicle, and guide.\n"
         "Company: Gola Holidays, Ramnagar, Uttarakhand."
     ),
     scenarios=[
-        "Bijrani Zone — dense sal forest, high tiger activity, spotted a tiger",
-        "Jhirna Zone — open grassland, saw elephants and leopard",
-        "Garjia Zone — near Garjia Devi Temple, lots of birds and spotted deer",
-        "Dhikala Zone — deep core zone, dramatic, very limited permits, saw a tusker",
-        "Durga Devi Zone — remote, river views, less crowded, crocodile on Ramganga riverbank",
-        "Sitabani Zone — buffer zone, no permit needed, quieter, peacocks and hornbills",
-        "Canter Safari into Dhikala — shared open vehicle, early morning, misty forest roads",
-        "Forest Rest House stay — sleeping inside the park, jungle sounds at night"
+        "Bijrani Zone (Jeep Safari) — dense sal forest, high tiger activity, spotted a tiger, jeep picked us up from resort",
+        "Jhirna Zone (Jeep Safari) — open grassland, saw elephants and leopard, morning slot",
+        "Garjia Zone (Jeep Safari) — near Garjia Devi Temple, lots of birds and spotted deer, resort pickup",
+        "Dhikala Zone (Day Visit via Canter Safari) — shared open Canter bus starting from Ramnagar town (no resort pickup), deep core zone, very limited permits, saw a tusker",
+        "Durga Devi Zone (Jeep Safari) — remote, river views, less crowded, crocodile on Ramganga riverbank",
+        "Sitabani Zone (Jeep Safari) — buffer zone, no permit needed, quieter, peacocks and hornbills",
+        "Forest Rest House stay (Night Stay inside Dhikala) — sleeping inside the core park, exclusive jeep safari inside, jungle sounds at night"
     ],
 )
 
