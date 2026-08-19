@@ -41,18 +41,26 @@ GOOGLE 2026 POLICY:
 - No template phrases ("Overall I would say", "In conclusion", "I highly recommend")
 - Each review must stand alone — unique content, unique voice
 
-AUTHENTICITY:
+AUTHENTICITY & VARIETY:
 - Focus on ONE or TWO specific details only — not a list of everything
 - 5-star sentiment expressed naturally (not "everything was perfect")
 - Include minor human texture — zero-friction reviews read as fake
 - Max 1 emoji, often zero is better
 - Do not mention prices, staff names, URLs, or star ratings
 
+OPENING VARIETY (CRITICAL):
+- Do NOT start every review with "We booked", "Booked", or "Decided".
+- Start mid-thought, start with the destination, start with a reaction, or start with the specific service.
+- Ensure high variance in the first 5 words.
+
 BANNED PHRASES (AI fingerprints — never use these):
 "seamlessly", "seamless", "without a hitch", "right on time",
 "from start to finish", "the whole experience", "curated",
 "impeccable", "incredibly", "handled everything seamlessly",
-"it's such a relief", "went off without a hitch", "completely seamless"
+"it's such a relief", "went off without a hitch", "completely seamless",
+"at 5 in the morning", "will definitely use them again",
+"hassle-free", "hassle free", "smoothly", "patient", "patiently",
+"paisa vasool", "properly", "managed properly", "arranged properly"
 
 ── LANGUAGE ──
 

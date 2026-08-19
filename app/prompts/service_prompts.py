@@ -1,20 +1,15 @@
 """
 Service-specific context blocks for Gola Holidays review generation.
 
-Each ServiceContext provides factual background about ONE service —
-locations, scenarios, what Gola arranges — without prescribing
-what words or phrases the reviewer should use.
-
-The persona (review_randomizer.py) determines the voice and focus.
-The service context provides the factual backdrop to write from.
-
-Note: pick_random_service() has been removed.
-      Service selection now lives in review_randomizer.roll_persona()
-      as Die 7, correlated with age + travel group.
+Each ServiceContext provides factual background about ONE service.
+To prevent the LLM from deterministically picking the first bullet point every time,
+the specific scenario/route/hotel is chosen randomly in Python via `get_context(rng)`.
+The LLM only ever sees ONE scenario to write about per generation.
 """
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 
 
@@ -23,7 +18,16 @@ class ServiceContext:
     """Factual context about a single Gola Holidays service."""
     service_id: str       # e.g., "safari", "hotel", "taxi"
     service_name: str     # human-readable name
-    context: str          # factual backdrop injected into system prompt
+    base_context: str     # general background info
+    scenarios: list[str]  # specific routes, zones, or packages
+
+    def get_context(self, rng: random.Random) -> str:
+        """Pick a specific scenario randomly in Python so the LLM doesn't just pick the first one."""
+        scenario = rng.choice(self.scenarios)
+        return (
+            f"{self.base_context}\n\n"
+            f"SPECIFIC SCENARIO TO WRITE ABOUT (Focus only on this):\n- {scenario}"
+        )
 
 
 # ── SERVICE 1: JIM CORBETT SAFARI ─────────────────────────────────────────────
@@ -31,31 +35,21 @@ class ServiceContext:
 _SAFARI = ServiceContext(
     service_id="safari",
     service_name="Jim Corbett Safari",
-    context="""SERVICE: Jim Corbett jungle safari booked through Gola Holidays.
-
-Pick ONE specific safari scenario — write about only that:
-
-JEEP SAFARI ZONES (pick one):
-- Bijrani Zone — dense sal forest, high tiger activity
-- Jhirna Zone — open grassland, elephants and leopard, open year-round
-- Garjia Zone — near Garjia Devi Temple, birds and spotted deer
-- Dhikala Zone — deep core zone, dramatic, very limited permits
-- Durga Devi Zone — remote, river views, less crowded
-- Sitabani Zone — buffer zone, no permit needed, quieter
-
-OTHER SAFARI TYPES:
-- Canter Safari into Dhikala — shared open vehicle, early morning, misty forest roads
-- Forest Rest House stay — sleeping inside the park, jungle sounds at night
-
-WILDLIFE (pick one or two, not all):
-- Tiger sighting (rare and memorable)
-- Elephant herd crossing
-- Gharial or crocodile on Ramganga riverbank
-- Peacocks, hornbills, spotted deer
-
-WHAT GOLA ARRANGED: permit booking, jeep and guide, morning or evening slot, pickup from station or resort.
-
-Company: Gola Holidays, Ramnagar, Uttarakhand.""",
+    base_context=(
+        "SERVICE: Jim Corbett jungle safari booked through Gola Holidays.\n"
+        "WHAT GOLA ARRANGED: permit booking, jeep and guide, morning or evening slot, pickup from station or resort.\n"
+        "Company: Gola Holidays, Ramnagar, Uttarakhand."
+    ),
+    scenarios=[
+        "Bijrani Zone — dense sal forest, high tiger activity, spotted a tiger",
+        "Jhirna Zone — open grassland, saw elephants and leopard",
+        "Garjia Zone — near Garjia Devi Temple, lots of birds and spotted deer",
+        "Dhikala Zone — deep core zone, dramatic, very limited permits, saw a tusker",
+        "Durga Devi Zone — remote, river views, less crowded, crocodile on Ramganga riverbank",
+        "Sitabani Zone — buffer zone, no permit needed, quieter, peacocks and hornbills",
+        "Canter Safari into Dhikala — shared open vehicle, early morning, misty forest roads",
+        "Forest Rest House stay — sleeping inside the park, jungle sounds at night"
+    ],
 )
 
 
@@ -64,27 +58,23 @@ Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 _HOTEL = ServiceContext(
     service_id="hotel",
     service_name="Hotel / Resort Booking",
-    context="""SERVICE: Hotel or resort stay booked through Gola Holidays.
-
-Pick ONE specific property type and location — write about only that:
-
-NEAR CORBETT (Ramnagar area):
-- Jungle-facing resort — wildlife sounds at night, forest atmosphere
-- River-facing resort on Kosi or Ramganga — water sounds, outdoor seating
-- Budget lodge in Ramnagar town — clean, simple, practical
-
-OTHER UTTARAKHAND DESTINATIONS (pick one):
-- Nainital — lake-view hotel, Mall Road proximity
-- Bhimtal — quieter than Nainital, lakeside, peaceful
-- Rishikesh — Ganga view, calm atmosphere
-- Haridwar — near the ghats
-- Auli — snow views, Nanda Devi peak backdrop
-- Mussoorie — hillside valley view, Mall Road nearby
-- Munsiyari — remote Himalayan stay, Panchachuli peaks on clear mornings
-
-WHAT GOLA ARRANGED: matched property to budget, confirmed booking, no check-in surprises.
-
-Company: Gola Holidays, Ramnagar, Uttarakhand.""",
+    base_context=(
+        "SERVICE: Hotel or resort stay booked through Gola Holidays.\n"
+        "WHAT GOLA ARRANGED: matched property to budget, confirmed booking, no check-in surprises.\n"
+        "Company: Gola Holidays, Ramnagar, Uttarakhand."
+    ),
+    scenarios=[
+        "Corbett: Jungle-facing resort — wildlife sounds at night, forest atmosphere",
+        "Corbett: River-facing resort on Kosi or Ramganga — water sounds, outdoor seating",
+        "Corbett: Budget lodge in Ramnagar town — clean, simple, practical",
+        "Nainital: Lake-view hotel, short walking distance to Mall Road",
+        "Bhimtal: Quieter lakeside property, peaceful and away from city noise",
+        "Rishikesh: Ganga view property, calm and spiritual atmosphere",
+        "Haridwar: Hotel near the ghats, easy access for evening aarti",
+        "Auli: Mountain resort with snow views and Nanda Devi peak backdrop",
+        "Mussoorie: Hillside property with valley view, near Mall Road",
+        "Munsiyari: Remote Himalayan stay, Panchachuli peaks visible on clear mornings"
+    ],
 )
 
 
@@ -93,34 +83,22 @@ Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 _TAXI = ServiceContext(
     service_id="taxi",
     service_name="Taxi / Cab Service",
-    context="""SERVICE: Taxi or cab arranged through Gola Holidays.
-
-Pick ONE specific route — write about only that ride:
-
-AIRPORT TRANSFERS:
-- Pantnagar Airport → Ramnagar / Corbett
-- Jolly Grant Airport (Dehradun) → Rishikesh / Haridwar / Mussoorie
-
-RAILWAY STATION TRANSFERS:
-- Kathgodam Station → Nainital / Bhimtal / Munsiyari / Ranikhet
-- Kathgodam Station → Ramnagar / Corbett
-- Ramnagar Station → resort or hotel
-- Haridwar Station → Rishikesh / Dehradun
-
-LONG MOUNTAIN ROUTES:
-- Delhi → Nainital
-- Delhi → Haridwar / Rishikesh
-- Kathgodam → Munsiyari (long scenic mountain drive)
-- Ramnagar → Corbett zones
-
-VEHICLES (mention if relevant to the experience):
-- Swift Dzire / Etios — for couples or solo travelers
-- Innova Crysta — comfortable family vehicle, good on mountain roads
-- Tempo Traveller — for groups of 8–12
-
-WHAT GOLA ARRANGED: cab booking, vehicle assignment, driver coordination.
-
-Company: Gola Holidays, Ramnagar, Uttarakhand.""",
+    base_context=(
+        "SERVICE: Taxi or cab arranged through Gola Holidays.\n"
+        "WHAT GOLA ARRANGED: cab booking, vehicle assignment, driver coordination.\n"
+        "Company: Gola Holidays, Ramnagar, Uttarakhand."
+    ),
+    scenarios=[
+        "Airport Transfer: Pantnagar Airport → Ramnagar / Corbett (Swift Dzire or Etios)",
+        "Airport Transfer: Jolly Grant Airport (Dehradun) → Rishikesh / Haridwar (Innova)",
+        "Railway Transfer: Kathgodam Station → Nainital / Bhimtal (Innova Crysta)",
+        "Railway Transfer: Kathgodam Station → Ramnagar / Corbett (Swift Dzire)",
+        "Railway Transfer: Ramnagar Station → Corbett resort (Tempo Traveller)",
+        "Long Route: Delhi → Nainital overnight drive (Innova Crysta)",
+        "Long Route: Delhi → Haridwar / Rishikesh (Swift Dzire)",
+        "Long Route: Kathgodam → Munsiyari long scenic mountain drive (Innova Crysta)",
+        "Long Route: Ramnagar → Corbett safari zones (Local Jeep)"
+    ],
 )
 
 
@@ -129,36 +107,25 @@ Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 _TOUR = ServiceContext(
     service_id="tour",
     service_name="Tour Package (Multi-day)",
-    context="""SERVICE: Multi-day tour package from Gola Holidays.
-
-Pick ONE specific package — write about only that trip:
-
-WILDLIFE PACKAGE:
-- Jim Corbett 2N/3D — stay + safari + local sightseeing
-
-HILL STATION PACKAGES (pick one):
-- Nainital 3N/4D — Naini Lake, Tiffin Top, Mall Road, Bhimtal day trip
-- Bhimtal + Naukuchiatal — quieter lakes circuit
-- Mussoorie 2N/3D — Kempty Falls, Company Garden, Cable Car
-- Munsiyari 4N/5D — "Little Kashmir", Khaliya Top, Milam Glacier base
-- Auli 3N/4D — skiing in winter, meadows in summer, Nanda Devi views
-- Ranikhet 2N/3D — peaceful cantonment, apple orchards
-- Kausani 2N/3D — sunrise over Himalayan peaks
-
-PILGRIMAGE PACKAGES (pick one):
-- Kedarnath Yatra — helicopter or trek option
-- Char Dham Yatra — Yamunotri, Gangotri, Kedarnath, Badrinath
-- Do Dham — Kedarnath + Badrinath
-- Haridwar + Rishikesh spiritual trip
-
-ADVENTURE / TREKKING:
-- Valley of Flowers + Hemkund Sahib (July–September)
-- Roopkund Trek
-- Pindari Glacier Trek
-
-WHAT GOLA ARRANGED: itinerary, accommodation, transport, guide, permit where needed.
-
-Company: Gola Holidays, Ramnagar, Uttarakhand.""",
+    base_context=(
+        "SERVICE: Multi-day tour package from Gola Holidays.\n"
+        "WHAT GOLA ARRANGED: itinerary, accommodation, transport, guide, permit where needed.\n"
+        "Company: Gola Holidays, Ramnagar, Uttarakhand."
+    ),
+    scenarios=[
+        "Wildlife: Jim Corbett 2N/3D — stay + safari + local sightseeing",
+        "Hill Station: Nainital 3N/4D — Naini Lake, Tiffin Top, Mall Road, Bhimtal day trip",
+        "Hill Station: Bhimtal + Naukuchiatal 2N/3D — quieter lakes circuit",
+        "Hill Station: Mussoorie 2N/3D — Kempty Falls, Company Garden, Cable Car",
+        "Hill Station: Munsiyari 4N/5D — 'Little Kashmir', Khaliya Top, Milam Glacier base",
+        "Hill Station: Auli 3N/4D — skiing in winter, meadows in summer, Nanda Devi views",
+        "Hill Station: Ranikhet 2N/3D — peaceful cantonment, apple orchards",
+        "Hill Station: Kausani 2N/3D — sunrise over Himalayan peaks",
+        "Pilgrimage: Kedarnath Yatra — helicopter or trek option",
+        "Pilgrimage: Char Dham Yatra — Yamunotri, Gangotri, Kedarnath, Badrinath",
+        "Pilgrimage: Haridwar + Rishikesh 2N/3D spiritual trip",
+        "Adventure: Valley of Flowers + Hemkund Sahib trekking package"
+    ],
 )
 
 
@@ -167,26 +134,21 @@ Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 _SIGHTSEEING = ServiceContext(
     service_id="sightseeing",
     service_name="Local Sightseeing",
-    context="""SERVICE: Local sightseeing trip arranged by Gola Holidays.
-
-Pick ONE specific area — write about only those spots:
-
-AROUND JIM CORBETT / RAMNAGAR:
-- Garjia Devi Temple — hillside temple on a rock in the Kosi river
-- Corbett Falls — waterfall in the forest, short trail
-- Corbett Museum (Choti Haldwani) — Jim Corbett's old home, historical
-- Ramganga river viewpoint — popular sunset spot
-
-NAINITAL SIGHTSEEING:
-- Naini Lake boat ride
-- Tiffin Top (Dorothy's Seat) — panoramic Himalayan view
-- Snow View Point (cable car)
-- Naina Devi Temple
-- Bhimtal Lake, Sattal, Naukuchiatal day trips
-
-WHAT GOLA ARRANGED: cab and driver for the day, route planning, local area knowledge.
-
-Company: Gola Holidays, Ramnagar, Uttarakhand.""",
+    base_context=(
+        "SERVICE: Local sightseeing trip arranged by Gola Holidays.\n"
+        "WHAT GOLA ARRANGED: cab and driver for the day, route planning, local area knowledge.\n"
+        "Company: Gola Holidays, Ramnagar, Uttarakhand."
+    ),
+    scenarios=[
+        "Corbett Area: Garjia Devi Temple — hillside temple on a rock in the Kosi river",
+        "Corbett Area: Corbett Falls — waterfall in the forest, short trail",
+        "Corbett Area: Corbett Museum (Choti Haldwani) — Jim Corbett's old home",
+        "Corbett Area: Ramganga river viewpoint — popular sunset spot",
+        "Nainital: Naini Lake boat ride and Mall Road stroll",
+        "Nainital: Tiffin Top (Dorothy's Seat) — panoramic Himalayan view",
+        "Nainital: Snow View Point (cable car) and Naina Devi Temple",
+        "Nainital: Day trip covering Bhimtal Lake, Sattal, and Naukuchiatal"
+    ],
 )
 
 

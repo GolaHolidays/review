@@ -19,6 +19,13 @@ logger = logging.getLogger(__name__)
 
 _default_client: LLMClient | None = None
 
+# Session-level deduplication cache
+_opening_cache: set[str] = set()
+
+def clear_generation_cache() -> None:
+    """Clear the session-level deduplication cache."""
+    _opening_cache.clear()
+
 
 def _get_default_client() -> LLMClient:
     global _default_client
@@ -33,7 +40,7 @@ def _build_prompts() -> tuple[str, str, float]:
     persona_block = format_persona_for_prompt(card)
 
     system_prompt = build_system_prompt(
-        service_context=card.service.context,
+        service_context=card.resolved_context_str,
         persona_block=persona_block,
     )
 
@@ -56,14 +63,40 @@ def _build_prompts() -> tuple[str, str, float]:
 
 
 async def agenerate_review(client: LLMClient | None = None) -> str:
-    """Async: generate one unique review with full 7-dice randomization."""
+    """Async: generate one unique review with full 7-dice randomization and session dedup."""
     resolved = client or _get_default_client()
-    system_prompt, user_prompt, temp_offset = _build_prompts()
+    for _ in range(3):
+        system_prompt, user_prompt, temp_offset = _build_prompts()
+        rev = await resolved.agenerate(system_prompt, user_prompt, temp_offset)
+        
+        words = rev.lower().split()
+        if len(words) >= 6:
+            opening = " ".join(words[:6])
+            if opening in _opening_cache:
+                logger.warning(f"Duplicate opening detected '{opening}'. Retrying...")
+                continue
+            _opening_cache.add(opening)
+        return rev
+
+    # Fallback if 3 retries fail
     return await resolved.agenerate(system_prompt, user_prompt, temp_offset)
 
 
 def generate_review(client: LLMClient | None = None) -> str:
-    """Sync: generate one unique review with full 7-dice randomization."""
+    """Sync: generate one unique review with full 7-dice randomization and session dedup."""
     resolved = client or _get_default_client()
-    system_prompt, user_prompt, temp_offset = _build_prompts()
+    for _ in range(3):
+        system_prompt, user_prompt, temp_offset = _build_prompts()
+        rev = resolved.generate(system_prompt, user_prompt, temp_offset)
+        
+        words = rev.lower().split()
+        if len(words) >= 6:
+            opening = " ".join(words[:6])
+            if opening in _opening_cache:
+                logger.warning(f"Duplicate opening detected '{opening}'. Retrying...")
+                continue
+            _opening_cache.add(opening)
+        return rev
+
+    # Fallback if 3 retries fail
     return resolved.generate(system_prompt, user_prompt, temp_offset)

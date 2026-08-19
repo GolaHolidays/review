@@ -375,7 +375,7 @@ def _compute_service_weights(age: AgeBucket, group: TravelGroup) -> list[float]:
     Still probabilistic — a 60yr old CAN book a safari, just less likely.
     """
     # Base weights: [safari, hotel, taxi, tour, sightseeing]
-    w = [0.25, 0.15, 0.20, 0.25, 0.15]
+    w = [0.25, 0.10, 0.20, 0.30, 0.15]
 
     # Age adjustments
     if age.label in ("50s", "60s+"):
@@ -389,7 +389,7 @@ def _compute_service_weights(age: AgeBucket, group: TravelGroup) -> list[float]:
     # Travel group adjustments
     if group.label == "Family with young children":
         w[3] += 0.10  # pre-arranged tour package most practical
-        w[1] += 0.05  # hotel stay important for families
+        w[1] += 0.03  # hotel stay important for families
         w[0] -= 0.08  # deep jungle safari less practical with small kids
     elif group.label == "Friends group trip":
         w[0] += 0.08  # safari is the group adventure choice
@@ -399,7 +399,7 @@ def _compute_service_weights(age: AgeBucket, group: TravelGroup) -> list[float]:
         w[3] += 0.04  # pre-arranged tour best for senior travel
         w[0] -= 0.10  # rough safari terrain not ideal for seniors
     elif group.label == "Couple (anniversary or leisure trip)":
-        w[1] += 0.07  # hotel/resort stay matters for couples
+        w[1] += 0.04  # hotel/resort stay matters for couples
         w[4] += 0.04  # scenic sightseeing
     elif group.label == "Solo traveler":
         w[2] += 0.08  # taxi/cab most useful for solo travelers
@@ -429,6 +429,7 @@ class PersonaCard:
     service: ServiceContext    # Die 7 — correlated, not independent
     length: LengthProfile
     temperature_offset: float
+    resolved_context_str: str  # The specific scenario string for this roll
 
 
 # ── Roll function ──────────────────────────────────────────────────────────────
@@ -456,8 +457,11 @@ def roll_persona() -> PersonaCard:
     # Die 7: service correlated with age + travel group
     service_weights = _compute_service_weights(age, travel_group)
     service = rng.choices(ALL_SERVICES, weights=service_weights, k=1)[0]
+    
+    # Resolve the final specific scenario in Python using the same rng seed
+    resolved_context = service.get_context(rng)
 
-    temperature_offset = rng.uniform(-0.08, 0.08)
+    temperature_offset = rng.uniform(-0.10, 0.10)
 
     return PersonaCard(
         seed=seed,
@@ -470,6 +474,7 @@ def roll_persona() -> PersonaCard:
         service=service,
         length=length,
         temperature_offset=temperature_offset,
+        resolved_context_str=resolved_context,
     )
 
 
