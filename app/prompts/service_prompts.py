@@ -1,26 +1,29 @@
 """
-Service-specific prompt snippets for Gola Holidays review generation.
+Service-specific context blocks for Gola Holidays review generation.
 
-Instead of one giant prompt covering ALL services, each service has its
-own small, focused context block. The randomizer picks ONE per call.
+Each ServiceContext provides factual background about ONE service —
+locations, scenarios, what Gola arranges — without prescribing
+what words or phrases the reviewer should use.
 
-This means the LLM only sees context for ONE service at a time — producing
-more specific, accurate, and varied reviews.
+The persona (review_randomizer.py) determines the voice and focus.
+The service context provides the factual backdrop to write from.
+
+Note: pick_random_service() has been removed.
+      Service selection now lives in review_randomizer.roll_persona()
+      as Die 7, correlated with age + travel group.
 """
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class ServiceContext:
-    """A focused service context block for a single review generation."""
+    """Factual context about a single Gola Holidays service."""
     service_id: str       # e.g., "safari", "hotel", "taxi"
     service_name: str     # human-readable name
-    context: str          # the actual prompt text injected into system prompt
-    weight: float         # selection probability (safari is their main service)
+    context: str          # factual backdrop injected into system prompt
 
 
 # ── SERVICE 1: JIM CORBETT SAFARI ─────────────────────────────────────────────
@@ -28,74 +31,71 @@ class ServiceContext:
 _SAFARI = ServiceContext(
     service_id="safari",
     service_name="Jim Corbett Safari",
-    weight=0.30,
-    context="""SERVICE YOU USED: Jim Corbett jungle safari booked through Gola Holidays.
+    context="""SERVICE: Jim Corbett jungle safari booked through Gola Holidays.
 
-Pick ONE specific safari scenario and write about ONLY that:
+Pick ONE specific safari scenario — write about only that:
 
 JEEP SAFARI ZONES (pick one):
-- Bijrani Zone — dense forest, popular for tiger sightings
-- Jhirna Zone — open grassland, elephants and leopard, open all year
-- Garjia Zone — near Garjia Devi Temple, birds and deer
-- Dhikala Zone — deep core zone, dramatic experience, permits very limited
+- Bijrani Zone — dense sal forest, high tiger activity
+- Jhirna Zone — open grassland, elephants and leopard, open year-round
+- Garjia Zone — near Garjia Devi Temple, birds and spotted deer
+- Dhikala Zone — deep core zone, dramatic, very limited permits
 - Durga Devi Zone — remote, river views, less crowded
-- Sitabani Zone — buffer zone, no permit, quieter jungle walk
+- Sitabani Zone — buffer zone, no permit needed, quieter
 
 OTHER SAFARI TYPES:
 - Canter Safari into Dhikala — shared open vehicle, early morning, misty forest roads
 - Forest Rest House stay — sleeping inside the park, jungle sounds at night
 
-WILDLIFE YOU MIGHT HAVE SEEN (pick one or two, not all):
-- Tiger sighting (rare, makes the whole trip)
-- Elephant herd crossing the road
-- Gharial/crocodile on the Ramganga riverbank
+WILDLIFE (pick one or two, not all):
+- Tiger sighting (rare and memorable)
+- Elephant herd crossing
+- Gharial or crocodile on Ramganga riverbank
 - Peacocks, hornbills, spotted deer
 
-WHAT GOLA DID: permit booking (limited availability), jeep + guide arranged, morning/evening slot, pickup from station/resort
+WHAT GOLA ARRANGED: permit booking, jeep and guide, morning or evening slot, pickup from station or resort.
 
-Company: Gola Holidays, Ramnagar, Uttarakhand. Local team since 2010.""",
+Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 )
 
 
-# ── SERVICE 2: HOTEL / RESORT STAY ───────────────────────────────────────────
+# ── SERVICE 2: HOTEL / RESORT STAY ────────────────────────────────────────────
 
 _HOTEL = ServiceContext(
     service_id="hotel",
     service_name="Hotel / Resort Booking",
-    weight=0.15,
-    context="""SERVICE YOU USED: Hotel or resort booked through Gola Holidays.
+    context="""SERVICE: Hotel or resort stay booked through Gola Holidays.
 
-Pick ONE specific location and write about ONLY that stay:
+Pick ONE specific property type and location — write about only that:
 
-RESORTS NEAR CORBETT (Ramnagar area):
-- Jungle-facing resort — wildlife sounds at night
-- River-facing resort on Kosi or Ramganga river — flowing water sounds, outdoor seating
-- Budget lodge in Ramnagar town — clean, simple, good for one night
+NEAR CORBETT (Ramnagar area):
+- Jungle-facing resort — wildlife sounds at night, forest atmosphere
+- River-facing resort on Kosi or Ramganga — water sounds, outdoor seating
+- Budget lodge in Ramnagar town — clean, simple, practical
 
-HOTELS IN OTHER UTTARAKHAND DESTINATIONS (pick one):
-- Nainital — lake-view hotel, Mall Road walking distance
+OTHER UTTARAKHAND DESTINATIONS (pick one):
+- Nainital — lake-view hotel, Mall Road proximity
 - Bhimtal — quieter than Nainital, lakeside, peaceful
-- Rishikesh — Ganga-view, yoga/meditation vibe
-- Haridwar — near ghats, Ganga aarti visible
+- Rishikesh — Ganga view, calm atmosphere
+- Haridwar — near the ghats
 - Auli — snow views, Nanda Devi peak backdrop
-- Mussoorie — hillside, valley view, Mall Road nearby
+- Mussoorie — hillside valley view, Mall Road nearby
 - Munsiyari — remote Himalayan stay, Panchachuli peaks on clear mornings
 
-WHAT GUESTS NOTICED: Gola matched them to right property for budget, no check-in surprises, hotel was as described
+WHAT GOLA ARRANGED: matched property to budget, confirmed booking, no check-in surprises.
 
-Company: Gola Holidays, Ramnagar, Uttarakhand. Local team since 2010.""",
+Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 )
 
 
-# ── SERVICE 3: TAXI / CAB SERVICE ────────────────────────────────────────────
+# ── SERVICE 3: TAXI / CAB SERVICE ─────────────────────────────────────────────
 
 _TAXI = ServiceContext(
     service_id="taxi",
     service_name="Taxi / Cab Service",
-    weight=0.20,
-    context="""SERVICE YOU USED: Taxi or cab service from Gola Holidays.
+    context="""SERVICE: Taxi or cab arranged through Gola Holidays.
 
-Pick ONE specific route/scenario and write about ONLY that ride:
+Pick ONE specific route — write about only that ride:
 
 AIRPORT TRANSFERS:
 - Pantnagar Airport → Ramnagar / Corbett
@@ -104,81 +104,78 @@ AIRPORT TRANSFERS:
 RAILWAY STATION TRANSFERS:
 - Kathgodam Station → Nainital / Bhimtal / Munsiyari / Ranikhet
 - Kathgodam Station → Ramnagar / Corbett
-- Ramnagar Station → resort / hotel
+- Ramnagar Station → resort or hotel
 - Haridwar Station → Rishikesh / Dehradun
 
-LONG ROUTES:
-- Delhi → Nainital (overnight or early morning drive)
+LONG MOUNTAIN ROUTES:
+- Delhi → Nainital
 - Delhi → Haridwar / Rishikesh
-- Kathgodam → Munsiyari (long mountain drive, scenic)
+- Kathgodam → Munsiyari (long scenic mountain drive)
 - Ramnagar → Corbett zones
 
-VEHICLES (mention if relevant):
-- Swift Dzire / Etios — couples, solo
-- Innova Crysta — family of 4-5, comfortable on mountain roads
-- Tempo Traveller — group of 8-12
+VEHICLES (mention if relevant to the experience):
+- Swift Dzire / Etios — for couples or solo travelers
+- Innova Crysta — comfortable family vehicle, good on mountain roads
+- Tempo Traveller — for groups of 8–12
 
-WHAT GUESTS NOTICED: driver on time, clean vehicle, no haggling, knew the roads well, helpful with luggage
+WHAT GOLA ARRANGED: cab booking, vehicle assignment, driver coordination.
 
-Company: Gola Holidays, Ramnagar, Uttarakhand. Local team since 2010.""",
+Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 )
 
 
-# ── SERVICE 4: TOUR PACKAGES ─────────────────────────────────────────────────
+# ── SERVICE 4: TOUR PACKAGES ───────────────────────────────────────────────────
 
 _TOUR = ServiceContext(
     service_id="tour",
     service_name="Tour Package (Multi-day)",
-    weight=0.20,
-    context="""SERVICE YOU USED: Multi-day tour package from Gola Holidays.
+    context="""SERVICE: Multi-day tour package from Gola Holidays.
 
-Pick ONE specific package and write about ONLY that trip:
+Pick ONE specific package — write about only that trip:
 
 WILDLIFE PACKAGE:
-- Jim Corbett 2N/3D — stay + safari + sightseeing included
+- Jim Corbett 2N/3D — stay + safari + local sightseeing
 
 HILL STATION PACKAGES (pick one):
 - Nainital 3N/4D — Naini Lake, Tiffin Top, Mall Road, Bhimtal day trip
 - Bhimtal + Naukuchiatal — quieter lakes circuit
 - Mussoorie 2N/3D — Kempty Falls, Company Garden, Cable Car
 - Munsiyari 4N/5D — "Little Kashmir", Khaliya Top, Milam Glacier base
-- Auli 3N/4D — skiing (winter), Gorson Bugyal meadow (summer), Nanda Devi views
-- Ranikhet 2N/3D — peaceful cantonment, apple orchards, Chaubatia gardens
-- Kausani 2N/3D — sunrise over Himalayan peaks, Anasakti Ashram
+- Auli 3N/4D — skiing in winter, meadows in summer, Nanda Devi views
+- Ranikhet 2N/3D — peaceful cantonment, apple orchards
+- Kausani 2N/3D — sunrise over Himalayan peaks
 
 PILGRIMAGE PACKAGES (pick one):
 - Kedarnath Yatra — helicopter or trek option
-- Char Dham Yatra — Yamunotri, Gangotri, Kedarnath, Badrinath (all 4)
-- Do Dham — Kedarnath + Badrinath only
+- Char Dham Yatra — Yamunotri, Gangotri, Kedarnath, Badrinath
+- Do Dham — Kedarnath + Badrinath
 - Haridwar + Rishikesh spiritual trip
 
 ADVENTURE / TREKKING:
-- Valley of Flowers + Hemkund Sahib (July-September)
+- Valley of Flowers + Hemkund Sahib (July–September)
 - Roopkund Trek
 - Pindari Glacier Trek
-- Khaliya Top, Munsiyari
 
-WHAT GUESTS NOTICED: everything pre-arranged, good itinerary pacing, driver + guide knew the area, good value
+WHAT GOLA ARRANGED: itinerary, accommodation, transport, guide, permit where needed.
 
-Company: Gola Holidays, Ramnagar, Uttarakhand. Local team since 2010.""",
+Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 )
 
 
-# ── SERVICE 5: SIGHTSEEING ───────────────────────────────────────────────────
+# ── SERVICE 5: LOCAL SIGHTSEEING ──────────────────────────────────────────────
 
 _SIGHTSEEING = ServiceContext(
     service_id="sightseeing",
     service_name="Local Sightseeing",
-    weight=0.15,
-    context="""SERVICE YOU USED: Local sightseeing trip arranged by Gola Holidays.
+    context="""SERVICE: Local sightseeing trip arranged by Gola Holidays.
 
-Pick ONE specific area and write about ONLY those spots:
+Pick ONE specific area — write about only those spots:
 
 AROUND JIM CORBETT / RAMNAGAR:
-- Garjia Devi Temple — hillside temple on a rock in the Kosi river, scenic
+- Garjia Devi Temple — hillside temple on a rock in the Kosi river
 - Corbett Falls — waterfall in the forest, short trail
 - Corbett Museum (Choti Haldwani) — Jim Corbett's old home, historical
-- Ramganga river viewpoint — sunset spot
+- Ramganga river viewpoint — popular sunset spot
 
 NAINITAL SIGHTSEEING:
 - Naini Lake boat ride
@@ -187,23 +184,14 @@ NAINITAL SIGHTSEEING:
 - Naina Devi Temple
 - Bhimtal Lake, Sattal, Naukuchiatal day trips
 
-WHAT GUESTS NOTICED: driver doubled as a local guide, knew best times, no rushed schedule, showed hidden spots tourists usually miss
+WHAT GOLA ARRANGED: cab and driver for the day, route planning, local area knowledge.
 
-Company: Gola Holidays, Ramnagar, Uttarakhand. Local team since 2010.""",
+Company: Gola Holidays, Ramnagar, Uttarakhand.""",
 )
 
 
-# ── All services list ─────────────────────────────────────────────────────────
+# ── All services list ──────────────────────────────────────────────────────────
+# Used by review_randomizer._compute_service_weights()
+# Order matters: [safari, hotel, taxi, tour, sightseeing]
 
 ALL_SERVICES: list[ServiceContext] = [_SAFARI, _HOTEL, _TAXI, _TOUR, _SIGHTSEEING]
-_SERVICE_WEIGHTS: list[float] = [s.weight for s in ALL_SERVICES]
-
-
-def pick_random_service() -> ServiceContext:
-    """
-    Pick one service using weighted random selection.
-    
-    Safari has the highest weight (0.30) since it's Gola's primary business.
-    Each call independently rolls — no memory of previous selections.
-    """
-    return random.choices(ALL_SERVICES, weights=_SERVICE_WEIGHTS, k=1)[0]
