@@ -102,7 +102,7 @@ class GeminiClient:
         self._pool       = KeyPool(settings.gemini_api_keys)
         self._model      = settings.llm_model
         self._gen_config = types.GenerateContentConfig(
-            temperature=1.4,
+            temperature=0.85,
             top_p=0.95,
             max_output_tokens=300,
         )

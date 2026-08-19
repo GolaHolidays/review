@@ -39,7 +39,7 @@ async def agenerate_review(client: LLMClient | None = None) -> str:
     """
     resolved = client or _get_default_client()
     system_prompt = build_system_prompt()
-    user_prompt = "Write a new, unique Google review for this business."
+    user_prompt = "Write a complete, detailed 3 to 4 sentence Google Maps review for Gola Holidays sharing a genuine, personal trip experience."
     return await resolved.agenerate(system_prompt, user_prompt)
 
 
@@ -47,5 +47,5 @@ def generate_review(client: LLMClient | None = None) -> str:
     """Sync: generate a review (kept for backwards compat / testing)."""
     resolved = client or _get_default_client()
     system_prompt = build_system_prompt()
-    user_prompt = "Write a new, unique Google review for this business."
+    user_prompt = "Write a complete, detailed 3 to 4 sentence Google Maps review for Gola Holidays sharing a genuine, personal trip experience."
     return resolved.generate(system_prompt, user_prompt)
